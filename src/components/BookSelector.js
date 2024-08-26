@@ -5,14 +5,13 @@ import styled from "styled-components";
 
 async function checkRelevantSubjects(subjects) {
   const response = await fetch('/unique_genres.json');
-  const genresJson = await response.json(); // Extract the JSON data
-  const relevantGenres = Array.from(genresJson); // Convert the JSON data to an array
+  const genresJson = await response.json();
+  const relevantGenres = Array.from(genresJson);
   let relevantSubjects = [];
   for (const genre of subjects) {
     if (relevantGenres.includes(genre)) {
       relevantSubjects.push(genre);
-    }
-    else {
+    } else {
       for (const word of genre.split(' ')) {
         if (relevantGenres.includes(word)) {
           if (!relevantSubjects.includes(word)) {
@@ -24,7 +23,6 @@ async function checkRelevantSubjects(subjects) {
   }
   return relevantSubjects;
 }
-
 
 async function filterSubjects(subjects) {
   return Array.from(subjects.filter(subject => {
@@ -54,7 +52,6 @@ const Container = styled.div`
   min-height: 100vh;
   background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
   padding-bottom: 40px; 
-
 `;
 
 const Card = styled.div`
@@ -102,6 +99,26 @@ const Input = styled.input`
   }
 `;
 
+const TextArea = styled.textarea`
+  width: 100%;
+  height: 100px;
+  padding: 12px 20px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px solid #e0e6ed;
+  background-color: #f7f9fc;
+  font-size: 14px;
+  color: #333333;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    background-color: #ffffff;
+  }
+`;
+
 const Select = styled.select`
   width: 100%;
   padding: 12px 20px;
@@ -128,7 +145,7 @@ const ButtonContainer = styled.div`
 `;
 
 const BottomButton = styled.button`
-  width: 48%; /* Adjust to 48% to account for gaps between buttons */
+  width: 48%;
   padding: 12px 20px;
   background-color: #667eea;
   color: #ffffff;
@@ -243,6 +260,7 @@ export default function BookSelector() {
   const [fileName, setFileName] = useState("");
   const [Books, setBooks] = useState([]);
   const [fullList, setFullList] = useState([]); // State for holding the full list of books
+  const [pasteContent, setPasteContent] = useState(""); // State for holding pasted content
 
   useEffect(() => {
     setHasMounted(true);
@@ -250,10 +268,10 @@ export default function BookSelector() {
     const cachedBooks = localStorage.getItem('cachedBooks');
     const cachedGenres = localStorage.getItem('cachedGenres');
     const cachedFile = localStorage.getItem('cachedFile');
-    const cachedFileName = localStorage.getItem('cachedFileName'); // Get cached file name
+    const cachedFileName = localStorage.getItem('cachedFileName');
 
     if (cachedFileName) {
-      setFileName(cachedFileName); // Set the file name from localStorage
+      setFileName(cachedFileName);
     }
 
     if (cachedFile && !cachedBooks) {
@@ -280,7 +298,7 @@ export default function BookSelector() {
     reader.onload = async (event) => {
       const fileContents = event.target.result;
       localStorage.setItem('cachedFile', fileContents);
-      localStorage.setItem('cachedFileName', file.name); // Cache the file name
+      localStorage.setItem('cachedFileName', file.name);
 
       Papa.parse(fileContents, {
         header: true,
@@ -341,6 +359,72 @@ export default function BookSelector() {
     reader.readAsText(file);
   };
 
+  const handlePasteContent = () => {
+    setLoading(true);
+
+    Papa.parse(pasteContent, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async function (results) {
+        const columnsArray = [];
+        const valuesArray = [];
+        const genres = new Set();
+        const parsedBooks = [];
+        const unreadBooks = [];
+
+        for (const row of results.data) {
+          columnsArray.push(Object.keys(row));
+          valuesArray.push(Object.values(row));
+          if (row["Exclusive Shelf"] === "to-read") {
+            unreadBooks.push(row);
+          }
+        }
+
+        for (const row of unreadBooks) {
+          if (row["Book Id"]) {
+            try {
+              let ISBN;
+              if (row["ISBN"].length === 10) {
+
+                ISBN = row["ISBN"];
+              }
+              else {
+                ISBN = " ";
+              }
+              const bookDetails = await getBookDetailsFromGoodReads(ISBN, row["Title"]);
+              parsedBooks.push({ ...row, genres: bookDetails.genres, image: bookDetails.image });
+              bookDetails.genres.forEach(genre => genres.add(genre));
+            } catch (error) {
+              console.error(`Failed to fetch details for book ${row["Book Id"]}:`, error);
+            }
+          }
+        }
+        const filteredGenres = await filterSubjects(Array.from(genres));
+        const relevantGenres = await checkRelevantSubjects(filteredGenres);
+        const lowercasedGenres = relevantGenres.map(genre => genre.toLowerCase());
+
+        const filteredBooks = parsedBooks.map(book => {
+          const filteredGenres = book.genres.filter(genre => lowercasedGenres.includes(genre.toLowerCase()));
+
+          return {
+            ...book,
+            genres: filteredGenres
+          };
+        });
+        setData(filteredBooks);
+        setColumns(columnsArray);
+        setValues(valuesArray);
+        setGenreOptions(["all", ...lowercasedGenres]);
+        setUnReadBooks(filteredBooks);
+
+        localStorage.setItem('cachedBooks', JSON.stringify(parsedBooks));
+        localStorage.setItem('cachedGenres', JSON.stringify(["all", ...lowercasedGenres]));
+        setBooks(parsedBooks);
+        setLoading(false);
+      },
+    });
+  };
+
   const handleRandomBook = () => {
     setFullList([]); // Clear the full list
     const filteredBooks =
@@ -382,11 +466,12 @@ export default function BookSelector() {
     localStorage.removeItem('cachedBooks');
     localStorage.removeItem('cachedGenres');
     localStorage.removeItem('cachedFile');
-    localStorage.removeItem('cachedFileName'); // Remove cached file name
+    localStorage.removeItem('cachedFileName');
     setData([]);
     setGenreOptions([]);
     setUnReadBooks([]);
     setSelectedBook(null);
+    setPasteContent("");
   }
 
   const handleGenreChange = (event) => {
@@ -433,18 +518,29 @@ export default function BookSelector() {
                   Upload New File
                 </NewUploadButton>
               </div>
-            ) :
+            ) : (
               <div>
                 <Label>Upload Goodreads CSV</Label>
                 <Input
                   type="file"
                   accept=".csv"
                   onChange={handleFileUpload}
-                  required
                 />
+                <Label>Or Paste CSV Content</Label>
+                <TextArea
+                  value={pasteContent}
+                  onChange={(e) => setPasteContent(e.target.value)}
+                />
+                <NewUploadButton
+                  type="button"
+                  onClick={handlePasteContent}
+                  disabled={!pasteContent.trim()}
+                >
+                  Process Pasted CSV
+                </NewUploadButton>
                 <Link href="https://www.goodreads.com/review/import" target="_blank">How to export your Goodreads to-read list</Link>
               </div>
-            }
+            )}
             <div>
               <Label>Select Genre</Label>
               <Select

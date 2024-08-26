@@ -15,7 +15,6 @@ export async function GET(request, { params }) {
         let reqTitle = title.replace(/ /g, '+');
         reqTitle = reqTitle.split('(')[0]; // Remove anything in parentheses b/c the API doesn't like it
         if (reqIBSN == "" && reqTitle == "") {
-            console.log("Book title is required");
             return NextResponse.json({ error: 'Book title is required' }, { status: 400 });
         }
         let searchUrl;
@@ -26,7 +25,6 @@ export async function GET(request, { params }) {
             searchUrl = `https://openlibrary.org/search.json?q=${reqIBSN}&limit=1&fields=title,author_name,subject`;
         }
         // Fetch the data from the Open Library API
-        console.log(searchUrl);
         const response = await fetch(searchUrl);
         const data = await response.json();
 
