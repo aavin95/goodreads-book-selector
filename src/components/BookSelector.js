@@ -526,11 +526,11 @@ export default function BookSelector() {
                   accept=".csv"
                   onChange={handleFileUpload}
                 />
-                <Label>Or Paste CSV Content</Label>
+                {/*<Label>Or Paste CSV Content</Label>
                 <TextArea
                   value={pasteContent}
                   onChange={(e) => setPasteContent(e.target.value)}
-                />
+                />*/}
                 <NewUploadButton
                   type="button"
                   onClick={handlePasteContent}
