@@ -50,7 +50,6 @@ const Container = styled.div`
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
   padding-bottom: 40px; 
 `;
 
@@ -538,7 +537,7 @@ export default function BookSelector() {
                 >
                   Process Pasted CSV
                 </NewUploadButton>
-                <Link href="https://www.goodreads.com/review/import" target="_blank">How to export your Goodreads to-read list</Link>
+                <Link href="https://www.goodreads.com/review/import" target="_blank">Export your Goodreads to-read list</Link>
               </div>
             )}
             <div>

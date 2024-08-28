@@ -1,8 +1,10 @@
 "use client";
 import Head from "next/head";
 import { isMobile, isTablet } from "react-device-detect";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import BookSelector from "../components/BookSelector.js";
+import EnterWindow from "../components/EnterWindow.js";
 
 const Container = styled.div`
   display: flex;
@@ -36,6 +38,15 @@ const Text = styled.p`
 `;
 
 export default function Home() {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) {
+    return null; // Prevent rendering until mounted
+  }
   const isMobileOrTablet = isMobile || isTablet;
 
   if (isMobileOrTablet) {
@@ -65,7 +76,7 @@ export default function Home() {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
+      <EnterWindow />
       <BookSelector />
     </Container>
   );
