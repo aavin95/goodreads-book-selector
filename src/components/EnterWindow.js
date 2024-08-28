@@ -108,7 +108,7 @@ const WindowContent = styled.div`
   color: #333;
   font-size: 14px;
   line-height: 1.5;
-  overflow-y: auto; /* Ensure the content scrolls if it's too large */
+  overflow-y: auto;
   max-height: calc(100% - 40px);
 `;
 
@@ -121,6 +121,7 @@ const StyledButton = styled.button`
   cursor: pointer;
   font-weight: bold;
   margin-bottom: 10px;
+
   &:hover {
     background-color: #5a67d8;
   }
@@ -143,28 +144,34 @@ const HelpButton = styled.button`
 const PopUpWindow = () => {
     const [isVisible, setIsVisible] = useState(true);
     const [isFadingOut, setIsFadingOut] = useState(false);
-    const [position, setPosition] = useState({
-        x: (window.innerWidth - 600) / 2,
-        y: (window.innerHeight - 420) / 2,
-    });
-    const [size, setSize] = useState({
-        width: 600,
-        height: 400,
-    });
+    const [position, setPosition] = useState(null); // Initially null
+    const [size, setSize] = useState(null); // Initially null
     const [windowSize, setWindowSize] = useState({
         width: window.innerWidth,
         height: window.innerHeight,
     });
+
     const [hasMounted, setHasMounted] = useState(false);
 
-    const originalPosition = useRef(position);
-    const originalSize = useRef(size);
+    useEffect(() => {
+        const savedPosition = JSON.parse(localStorage.getItem('popup-position'));
+        const savedSize = JSON.parse(localStorage.getItem('popup-size'));
+        const savedVisibility = JSON.parse(localStorage.getItem('popup-visible'));
+
+        setPosition(savedPosition || { x: (window.innerWidth - 600) / 2, y: (window.innerHeight - 420) / 2 });
+        setSize(savedSize || { width: 600, height: 400 });
+        if (savedVisibility !== null) setIsVisible(savedVisibility);
+
+        setHasMounted(true);
+    }, []);
 
     useEffect(() => {
-        setHasMounted(true);
-        originalPosition.current = position; // Store original position
-        originalSize.current = size; // Store original size
-    }, []);
+        if (position && size) {
+            localStorage.setItem('popup-position', JSON.stringify(position));
+            localStorage.setItem('popup-size', JSON.stringify(size));
+            localStorage.setItem('popup-visible', JSON.stringify(isVisible));
+        }
+    }, [position, size, isVisible]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -199,12 +206,12 @@ const PopUpWindow = () => {
     };
 
     const handleDoubleClick = () => {
-        setPosition(originalPosition.current); // Reset position to original
-        setSize(originalSize.current); // Reset size to original
+        setPosition({ x: (window.innerWidth - 600) / 2, y: (window.innerHeight - 420) / 2 });
+        setSize({ width: 600, height: 400 });
     };
 
-    if (!hasMounted) {
-        return null; // Wait until the component has mounted to render anything
+    if (!hasMounted || !position || !size) {
+        return null;
     }
 
     return (
