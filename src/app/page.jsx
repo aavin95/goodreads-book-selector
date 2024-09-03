@@ -54,6 +54,10 @@ export default function Home() {
       <Container>
         <Head>
           <title>Site Not Supported</title>
+          <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚 </text></svg>"
+          />
         </Head>
         <Card>
           <Title>Currently Not Supported</Title>
@@ -74,7 +78,10 @@ export default function Home() {
           name="description"
           content="Select a random book or filter by genre from your Goodreads to-read list"
         />
-        <link rel="icon" href="/favicon.ico" />
+        <link
+          rel="icon"
+          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚 </text></svg>"
+        />
       </Head>
       <EnterWindow />
       <BookSelector />
