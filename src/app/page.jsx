@@ -52,13 +52,13 @@ export default function Home() {
   if (isMobileOrTablet) {
     return (
       <Container>
-        <Head>
+        <header>
           <title>Site Not Supported</title>
           <link
             rel="icon"
             href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚 </text></svg>"
           />
-        </Head>
+        </header>
         <Card>
           <Title>Currently Not Supported</Title>
           <Text>
@@ -72,7 +72,7 @@ export default function Home() {
 
   return (
     <Container>
-      <Head>
+      <header>
         <title>Goodreads Book Selector</title>
         <meta
           name="description"
@@ -82,7 +82,7 @@ export default function Home() {
           rel="icon"
           href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚 </text></svg>"
         />
-      </Head>
+      </header>
       <EnterWindow />
       <BookSelector />
     </Container>
